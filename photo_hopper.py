@@ -1,16 +1,9 @@
 import os
-import urllib
 import requests
-import httplib2
 
-import yaml
 import facebook
 import gdata.photos.service
 import gdata.media
-
-from oauth2client.file import Storage
-from oauth2client.client import flow_from_clientsecrets
-from oauth2client import tools
 
 storage_location = "/tmp/photo_hopper.jpg"
 
@@ -68,18 +61,18 @@ def create_gphotos_album(gd_client, album):
     except KeyError:
         album_summary = "Hopped from Facebook to Google Photos using Photo Hopper"
     gphoto_album = gd_client.InsertAlbum(title=album["name"], summary=album_summary)
-    print "\nNew Google Photos album '%s' initialized\n" % album["name"]
+    print("\nNew Google Photos album '%s' initialized\n" % album["name"])
     return '/data/feed/api/user/%s/albumid/%s' % ('default', gphoto_album.gphoto_id.text)
 
 def hop_photos(gd_client, photos, url, storage_location):
     for i in range(len(photos)):
         photo = photos[i]
-        print "Hopping photo %s of %s" % (i + 1, len(photos))
+        print("Hopping photo %s of %s" % (i + 1, len(photos)))
         try:
             photo_caption = photo["name"]
         except KeyError:
             photo_caption = "Doing the thing."
-        urllib.urlretrieve(photo["images"][0]["source"], storage_location)
+        open(storage_location, 'wb').write(requests.get(photo["images"][0]["source"]).content)
         gd_client.InsertPhotoSimple(url, photo["id"], photo_caption,
                                     storage_location, content_type='image/jpeg')
     os.remove(storage_location)
