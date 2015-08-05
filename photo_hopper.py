@@ -9,7 +9,7 @@ storage_location = "/tmp/photo_hopper.jpg"
 
 def initialize():
     print("Hello, let's get started!\n")
-    email = raw_input("What is your email address? ").strip().lower()
+    email = raw_input("What is the  email address you use for Google Photos? ").strip().lower()
     albums = raw_input("\nPlease enter a comma separated, case sensitive list\n" +
     "of the names of the albums you would like to transfer: ")
     albums = [album_name.strip() for album_name in albums.split(",")]
