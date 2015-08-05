@@ -1,9 +1,0 @@
-album_name: "Your case sensitive album name here"
-storage_loc: "where to temporarily store photos. For example, I use /tmp/photo_hopper.jpg"
-facebook:
-    access_token: "Can be generated using the Graph API explorer. Must be generated fairly often, since the token expires"
-google:
-    email: "Email of the Google user you want to add photos to (i.e. yourself)"
-    cred_file: "Where to store the API credentials"
-    secrets_file: "The file where you store the client secrets for your Google App, which is needed to authenticate users"
-
