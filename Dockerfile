@@ -9,5 +9,6 @@ RUN pip install requests \
 		gdata
 		
 ADD photo_hopper.py ./
+ADD hoppers.py ./
 
 CMD [ "python", "photo_hopper.py" ]
