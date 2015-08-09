@@ -7,6 +7,8 @@ import gdata.media
 class Hopper:
 
     storage_loc = "/tmp/photo_hopper.jpg"
+    default_summary = "Hopped using Photo Hopper"
+    default_caption = "Doing the thing"
 
     def __init__(self, email, album_names):
         self.email = email
@@ -15,7 +17,8 @@ class Hopper:
     def authorize_facebook_client(self):
         print("\nNote: Valid Facebook API tokens can be obtained by going to\n" +
               "developers.facebook.com/tools/explorer. Make sure the token\n" +
-              "you generate includes the user_photos permission.\n")
+              "you generate includes the user_photos and (under extended\n" +
+              "permissions) publish_actions permissions.\n")
         access_token = raw_input("Enter a valid Facebook API token here: ")
         self.fb_client = facebook.GraphAPI(access_token)
 
@@ -39,7 +42,7 @@ class Hopper:
     def create_album(self, album):
         print("Defined in classes that inherit from the Hopper class")
 
-    def hop(self, photos, upload_url):
+    def hop(self, photos, upload_dest):
         print("Defined in classes that inherit from the Hopper class")
 
 
@@ -69,20 +72,54 @@ class FacebookHopper(Hopper):
         try:
             album_summary = album["description"]
         except KeyError:
-            album_summary = "Hopped from Facebook to Google Photos using Photo Hopper"
-        gphoto_album = self.gd_client.InsertAlbum(title=album["name"], summary=album_summary)
+            album_summary = self.default_summary
+        new_album = self.gd_client.InsertAlbum(title=album["name"], summary=album_summary)
         print("\nNew Google Photos album '%s' initialized\n" % album["name"])
-        return '/data/feed/api/user/%s/albumid/%s' % ('default', gphoto_album.gphoto_id.text)
+        return '/data/feed/api/user/%s/albumid/%s' % ('default', new_album.gphoto_id.text)
 
-    def hop(self, photos, upload_url):
+    def hop(self, photos, upload_dest):
         for i in range(len(photos)):
             photo = photos[i]
             print("Hopping photo %s of %s" % (i + 1, len(photos)))
             try:
                 photo_caption = photo["name"]
             except KeyError:
-                photo_caption = "Doing the thing."
+                photo_caption = self.default_caption
             open(self.storage_loc, 'wb').write(requests.get(photo["images"][0]["source"]).content)
-            self.gd_client.InsertPhotoSimple(upload_url, photo["id"], photo_caption,
+            self.gd_client.InsertPhotoSimple(upload_dest, photo["id"], photo_caption,
                                     self.storage_loc, content_type='image/jpeg')
         os.remove(self.storage_loc)
+
+class GooglePhotosHopper(Hopper):
+
+    def find_album(self, album_name):
+        albums = self.gd_client.GetUserFeed()
+        album_names = [album.title.text for album in albums.entry]
+        return albums.entry[album_names.index(album_name)]
+        
+    def list_album_photos(self, album):
+        photos = self.gd_client.GetFeed('/data/feed/api/user/%s/albumid/%s?kind=photo' % (
+            'default', album.gphoto_id.text))
+        return photos.entry
+
+    def create_album(self, album):
+        if album.summary.text == "":
+            album_summary = self.default_summary
+        else:
+            album_summary = album.summary.text
+        new_album = self.fb_client.put_object(parent_object='me', connection_name='albums',
+                                              name=album.title.text, message=album_summary)
+        print("\nNew Facebook album '%s' initialized\n" % album.title.text)
+        return new_album['id']
+
+    def hop(self, photos, upload_dest):
+        for i in range(len(photos)):
+            photo = photos[i]
+            print("Hopping photo %s of %s" % (i + 1, len(photos)))
+            if photo.summary.text == "":
+                photo_caption = self.default_caption
+            else:
+                photo_caption = photo.summary.text
+            self.fb_client.put_object(parent_object=upload_dest, connection_name='photos',
+                                      url=photo.content.src, message=photo_caption,
+                                      no_story="true")

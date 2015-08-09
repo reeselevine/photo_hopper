@@ -1,9 +1,3 @@
-#import os
-#import requests
-#
-#import facebook
-#import gdata.photos.service
-#import gdata.media
 from hoppers import *
 
 storage_location = "/tmp/photo_hopper.jpg"
@@ -13,7 +7,7 @@ def create_hopper(email, album_names):
     if service == "facebook":
         hopper = FacebookHopper(email, album_names)
     elif service == "google":
-        hopper = GoogleHopper(email, album_names)
+        hopper = GooglePhotosHopper(email, album_names)
     else:
         print("\nSorry, uncrecognized service, try entering it again.")
         hopper = create_hopper(email, album_names)
@@ -34,9 +28,9 @@ def main():
     for album_name in hopper.album_names:
         album = hopper.find_album(album_name)
         photos = hopper.list_album_photos(album)
-        upload_url = hopper.create_album(album)
+        upload_dest = hopper.create_album(album)
         print("Starting hop of '%s'" % album_name)
-        hopper.hop(photos, upload_url)
+        hopper.hop(photos, upload_dest)
         print("Finished hopping '%s'" % album_name)
     print("\nAll done!")
 
