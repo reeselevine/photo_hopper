@@ -7,8 +7,6 @@ import gdata.media
 class Hopper:
 
     storage_loc = "/tmp/photo_hopper.jpg"
-    default_summary = "Hopped using Photo Hopper"
-    default_caption = "Doing the thing"
 
     def __init__(self, email, album_names):
         self.email = email
@@ -72,7 +70,7 @@ class FacebookHopper(Hopper):
         try:
             album_summary = album["description"]
         except KeyError:
-            album_summary = self.default_summary
+            album_summary = ""
         new_album = self.gd_client.InsertAlbum(title=album["name"], summary=album_summary)
         print("\nNew Google Photos album '%s' initialized\n" % album["name"])
         return '/data/feed/api/user/%s/albumid/%s' % ('default', new_album.gphoto_id.text)
@@ -84,7 +82,7 @@ class FacebookHopper(Hopper):
             try:
                 photo_caption = photo["name"]
             except KeyError:
-                photo_caption = self.default_caption
+                photo_caption = ""
             open(self.storage_loc, 'wb').write(requests.get(photo["images"][0]["source"]).content)
             self.gd_client.InsertPhotoSimple(upload_dest, photo["id"], photo_caption,
                                     self.storage_loc, content_type='image/jpeg')
@@ -104,7 +102,7 @@ class GooglePhotosHopper(Hopper):
 
     def create_album(self, album):
         if album.summary.text == "":
-            album_summary = self.default_summary
+            album_summary = ""
         else:
             album_summary = album.summary.text
         new_album = self.fb_client.put_object(parent_object='me', connection_name='albums',
@@ -117,7 +115,7 @@ class GooglePhotosHopper(Hopper):
             photo = photos[i]
             print("Hopping photo %s of %s" % (i + 1, len(photos)))
             if photo.summary.text == "":
-                photo_caption = self.default_caption
+                photo_caption = ""
             else:
                 photo_caption = photo.summary.text
             self.fb_client.put_object(parent_object=upload_dest, connection_name='photos',
